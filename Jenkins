@@ -1,0 +1,30 @@
+def commandMadmin(var, command) {
+sh """
+    if [ "${var}" == true ]; then ssh ubuntu@10.120.118.63 'cd /var/www/m-admin;${command}' || exit 1; fi
+"""
+}
+
+pipeline {
+    agent any
+    environment {
+     gitCheckuothCommand = "git checkout main"
+    }
+    stages {
+        stage('main') {
+            steps {
+                echo "branch name= main" 
+                echo "${gitCheckuothCommand}"
+                commandMadmin(true, 'git reset --hard')
+                commandMadmin(true, "git checkout main")
+                commandMadmin(true, 'git status')
+                commandMadmin(true, 'git pull')
+                
+                commandMadmin(PHP_ARTISAN_MIGRATE_madmin, 'php artisan migrate --force')
+                
+                commandMadmin(COMPOSER_UPDATE_madmin, 'composer update')
+                commandMadmin(COMPOSER_INSTALL_madmin, 'composer install')
+                
+            }
+        }
+    }
+}
